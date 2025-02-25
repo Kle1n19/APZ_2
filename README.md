@@ -1,20 +1,62 @@
-# Hazelcast Queue with Producer-Consumer
+# LAB 2
+## Task 1
+### Встановити і налаштувати Hazelcast
+Встановив й розархівував з вказаного сайту
+## Task 2
+### Сконфігурувати і запустити 3 ноди (інстанси) об'єднані в кластер або як частину Java-застосування, або як окремі застосування
+Відкрив три різних термінали й запустив в них:
+```
+./bin/hz start
+```
+Після запуску усіх трьох отримав наступне:
+```
+Members {size:3, ver:3} [
+	Member [127.0.0.1]:5701 - 4325017b-3cd6-4a3e-9def-8b16d04604dc
+	Member [127.0.0.1]:5702 - df5bab1d-857d-41a7-86ca-0e87df53c80b
+	Member [127.0.0.1]:5703 - e1da6330-fb23-4369-8e05-f86acccc0207 this
+]
+```
+## Task 3
+### Продемонструйте роботу Distributed Map
+- використовуючи API на будь-якій мові яка має клієнт для Hazelcast, створіть
+Distributed Map
+Створив за допомогою коду в `data.py`
+- запишіть в неї 1000 значень з ключами від 0 до 1000
+Записав за допомогою коду в `data.py`
+- за допомогою Management Center подивиться на розподіл ключів по нодах
+Завантажив Management Center. Увійшов в нього. Зайшов у створений кластер й отримав наступне:  
+![Alt text](images/Screenshot%202025-02-25%20at%2012.00.21.png)
+- подивитись як зміниться розподіл даних по нодах
+  - якщо відключити одну ноду  
+    Після відключення ноди за допомогою `CTRL + C` у відповідному терміналі я отримав:  
+    ![Alt text](images/Screenshot%202025-02-25%20at%2012.01.47.png)
+  - відключити послідовно дві ноди 
+    Після процедури вище в двох терміналах отримав наступне:
+    ![Alt text](images/Screenshot%202025-02-25%20at%2012.02.48.png)
+  - відключити одночасно дві ноди (емулюючи “падіння” серверів, чи використовуючи команду kill -9)
+    Перш ніж це зробити слід було знайти ID відповідних процесів пісдя чого виконати:
+    `kill -9 <pid_1> <pid_2>`
+    Отримав я наступний результат:  
+    ![Alt text](images/Screenshot%202025-02-25%20at%2012.11.01.png)
+  - Чи буде втрата даних?
+    З скріншоту вище видно, що буде.
+  - Яким чином зробити щоб не було втрати даних?
+    Перше що спадає на думку - тримати бекпи й по інформації з них відновлювати дані.
+## Task 4
+### Продемонструйте роботу Distributed Map without locks
+- використовуючи 3 клієнта, на кожному з них одночасно запустіть інкремент
+значення для одного й того самого ключа в циклі на 10К ітерацій
+Виконано за допомогою коду з `task4.py`
+- подивиться яке кінцеве значення для ключа “key” буде отримано (чи вийде 30К?)
+Отриманий результат:
+![Alt text](images/Screenshot%202025-02-25%20at%2013.44.58.png)
+Мабуть race condition))
+# Task 5
+## Зробіть те саме з використанням песимістичним блокування та поміряйте час
+Виконано за допомогою коду з `task5.py`
+  
 
-This project demonstrates the usage of a Hazelcast distributed queue with producer and consumer threads, while ensuring that the queue size remains bounded (max size = 10).
 
-## Features
-- **Producer thread**: Produces 100 items and adds them to a Hazelcast queue with a maximum size of 10.
-- **Consumer threads**: Consumes items from the queue, with two consumers running concurrently.
-- **Thread synchronization**: The producer waits until there is space in the queue, and the consumers stop once all items have been consumed.
 
-## Requirements
-- Hazelcast installed and running on the specified ports (5701, 5702, 5703).
-- Python 3.x
-- Install the Hazelcast Python client: `pip install hazelcast`
-
-## How to Run
-
-1. **Start Hazelcast cluster** (ensure the nodes are running at `127.0.0.1:5701`, `127.0.0.1:5702`, and `127.0.0.1:5703`).
-2. **Run the Python script**:
-   ```bash
-   python hazelcast_queue.py
+    
+    
