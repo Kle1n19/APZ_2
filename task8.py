@@ -2,51 +2,40 @@ import hazelcast
 import threading
 import time
 
-def run_client_with_bounded_queue():
-    client = hazelcast.HazelcastClient(
-        cluster_name="dev",
-        cluster_members=["127.0.0.1:5701", "127.0.0.1:5702", "127.0.0.1:5703"]
-    )
 
-    queue = client.get_queue("bounded-queue").blocking()
+def producer(client):
+    queue = client.get_queue("queue").blocking()
+    for i in range(1, 101):
+        while queue.size() >= 10:
+            time.sleep(0.1)
+        queue.put(i)
+        print(f"Produced: {i}")
+        time.sleep(0.1)
 
-    done = threading.Event()
 
-    def producer():
-        for i in range(1, 101):
-            while queue.size() >= 10:
-                time.sleep(0.1)
+def consumer(client, consumer_id):
+    queue = client.get_queue("queue").blocking()
+    while True:
+        value = queue.take()
+        print(f"Consumer {consumer_id} consumed: {value}")
+        time.sleep(0.2)
 
-            queue.put(i)
-            print(f"Prod {i}")
+client1 = hazelcast.HazelcastClient(cluster_name="dev")
+client2 = hazelcast.HazelcastClient(cluster_name="dev")
+client3 = hazelcast.HazelcastClient(cluster_name="dev")
 
-        done.set()
+producer_thread = threading.Thread(target=producer, args=(client1,))
+consumer_thread1 = threading.Thread(target=consumer, args=(client2, 1))
+consumer_thread2 = threading.Thread(target=consumer, args=(client3, 2))
 
-    def consumer():
-        while not done.is_set() or queue.size() > 0:
-            if not queue.is_empty():
-                value = queue.take()
-                print(f"Consume {value}")
-            else:
-                time.sleep(0.1)
+producer_thread.start()
+consumer_thread1.start()
+consumer_thread2.start()
 
-    start_time = time.time()
+producer_thread.join()
+consumer_thread1.join()
+consumer_thread2.join()
 
-    t1 = threading.Thread(target=producer)
-    t2 = threading.Thread(target=consumer)
-    t3 = threading.Thread(target=consumer)
-
-    t1.start()
-    t2.start()
-    t3.start()
-
-    t1.join()
-    t2.join()
-    t3.join()
-
-    end_time = time.time()
-    print(f"Time taken: {end_time - start_time:.2f} seconds")
-
-    client.shutdown()
-
-run_client_with_bounded_queue()
+client1.shutdown()
+client2.shutdown()
+client3.shutdown()
