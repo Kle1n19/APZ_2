@@ -1,5 +1,6 @@
 import hazelcast
 import threading
+import time
 
 def run_client_with_lock(client_id):
     client = hazelcast.HazelcastClient(
@@ -23,7 +24,7 @@ def run_client_with_lock(client_id):
     increment_map_with_lock()
 
     client.shutdown()
-
+start_time = time.time()
 threads = []
 for i in range(3):
     t = threading.Thread(target=run_client_with_lock, args=(i,))
@@ -40,5 +41,7 @@ final_client = hazelcast.HazelcastClient(
 final_map = final_client.get_map("map").blocking()
 
 print("Final value with pessimistic locking:", final_map.get("counter"))
+time_taken = time.time() - start_time
+print(f"Time taken: {time_taken:.2f} seconds")
 
 final_client.shutdown()
